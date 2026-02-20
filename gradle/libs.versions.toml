@@ -17,6 +17,8 @@ kotlinxCoroutines = "1.9.0"
 javaxInject = "1"
 retrofit = "2.9.0"
 okhttp = "4.12.0"
+gson = "2.10.1"
+media3 = "1.2.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -57,6 +59,13 @@ androidx-datastore-preferences = { group = "androidx.datastore", name = "datasto
 retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
 retrofit-converter-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "retrofit" }
 okhttp-logging = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp" }
+
+# JSON Parsing (Local Assets)
+gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
+
+# Media3 (ExoPlayer)
+androidx-media3-exoplayer = { group = "androidx.media3", name = "media3-exoplayer", version.ref = "media3" }
+androidx-media3-session = { group = "androidx.media3", name = "media3-session", version.ref = "media3" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
