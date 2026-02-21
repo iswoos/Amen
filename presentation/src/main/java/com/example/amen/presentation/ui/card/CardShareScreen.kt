@@ -14,9 +14,8 @@ import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -32,9 +31,11 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.amen.domain.entity.BibleVerse
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CardShareScreen(
     verse: BibleVerse, // 외부에서 넘어온 성경 구절
+    onBackClick: () -> Unit,
     viewModel: CardShareViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
@@ -44,73 +45,96 @@ fun CardShareScreen(
         viewModel.setVerseToShare(verse)
     }
 
-    Surface(
-        color = MaterialTheme.colorScheme.background,
-        modifier = Modifier.fillMaxSize()
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("은혜 나누기") },
+                navigationIcon = {
+                    IconButton(onClick = onBackClick) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "뒤로가기",
+                            tint = MaterialTheme.colorScheme.onBackground
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = MaterialTheme.colorScheme.onBackground
+                )
+            )
+        }
+    ) { paddingValues ->
+        Surface(
+            color = MaterialTheme.colorScheme.background,
             modifier = Modifier
                 .fillMaxSize()
-                .padding(32.dp)
+                .padding(paddingValues)
         ) {
-            Text(
-                text = "말씀 카드 공유",
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(bottom = 32.dp)
-            )
-
-            // 나중에 실제 이미지 위에 그려지게 될 '카드 프리뷰' 영역 
-            Box(
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(400.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(MaterialTheme.colorScheme.surface)
-                    .padding(32.dp),
-                contentAlignment = Alignment.Center
+                    .fillMaxSize()
+                    .padding(32.dp)
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = "말씀 카드 공유",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(bottom = 32.dp)
+                )
+
+                // 나중에 실제 이미지 위에 그려지게 될 '카드 프리뷰' 영역
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(400.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(MaterialTheme.colorScheme.surface)
+                        .padding(32.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = "\"${currentVerse?.content ?: "말씀을 불러오는 중..."}\"",
+                            style = MaterialTheme.typography.bodyLarge.copy(
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Medium,
+                                lineHeight = 32.sp,
+                                textAlign = TextAlign.Center
+                            ),
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                        Spacer(modifier = Modifier.height(24.dp))
+                        Text(
+                            text = "- ${currentVerse?.book} ${currentVerse?.chapter}:${currentVerse?.verse} -",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.secondary
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                Button(
+                    onClick = { viewModel.shareVerseText(context) },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                ) {
+                    Icon(Icons.Default.Share, contentDescription = "공유")
                     Text(
-                        text = "\"${currentVerse?.content ?: "말씀을 불러오는 중..."}\"",
-                        style = MaterialTheme.typography.bodyLarge.copy(
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Medium,
-                            lineHeight = 32.sp,
-                            textAlign = TextAlign.Center
-                        ),
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                    Spacer(modifier = Modifier.height(24.dp))
-                    Text(
-                        text = "- ${currentVerse?.book} ${currentVerse?.chapter}:${currentVerse?.verse} -",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.secondary
+                        text = "은혜 나누기",
+                        modifier = Modifier.padding(start = 8.dp),
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
                     )
                 }
-            }
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            Button(
-                onClick = { viewModel.shareVerseText(context) },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                ),
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp)
-            ) {
-                Icon(Icons.Default.Share, contentDescription = "공유")
-                Text(
-                    text = "은혜 나누기",
-                    modifier = Modifier.padding(start = 8.dp),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
-                )
             }
         }
     }

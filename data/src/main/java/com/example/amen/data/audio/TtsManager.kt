@@ -1,7 +1,10 @@
 package com.example.amen.data.audio
 
 import android.content.Context
+import android.os.Bundle
 import android.speech.tts.TextToSpeech
+import android.speech.tts.UtteranceProgressListener
+import android.util.Log
 import com.example.amen.domain.audio.TtsController
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.util.Locale
@@ -15,6 +18,23 @@ class TtsManager @Inject constructor(
 
     private var tts: TextToSpeech? = null
     private var isInitialized = false
+    private var onCompletionListener: (() -> Unit)? = null
+
+    private var currentVolume: Float = 1.0f
+
+    private val progressListener = object : UtteranceProgressListener() {
+        override fun onStart(utteranceId: String?) {
+            Log.d("TtsManager", "Utterance started: $utteranceId")
+        }
+        override fun onDone(utteranceId: String?) {
+            if (utteranceId?.startsWith("LAST_") == true) {
+                onCompletionListener?.invoke()
+            }
+        }
+        override fun onError(utteranceId: String?) {
+            onCompletionListener?.invoke()
+        }
+    }
 
     init {
         tts = TextToSpeech(context, this)
@@ -24,12 +44,11 @@ class TtsManager @Inject constructor(
         if (status == TextToSpeech.SUCCESS) {
             val result = tts?.setLanguage(Locale.KOREAN)
             if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-                // 언어 지원 안됨 핸들링
                 isInitialized = false
             } else {
-                // 요구사항에 따른 경건하고 편안한 톤 세팅
-                tts?.setPitch(0.8f)      // 약간 낮은 톤으로 안정감 스팅
-                tts?.setSpeechRate(0.85f)// 천천히 낭독
+                tts?.setPitch(0.85f)
+                tts?.setSpeechRate(0.85f)
+                tts?.setOnUtteranceProgressListener(progressListener)
                 isInitialized = true
             }
         }
@@ -37,10 +56,34 @@ class TtsManager @Inject constructor(
 
     override fun speak(text: String) {
         if (!isInitialized) return
-        
-        // 문장/구절 간 여백(무음)을 주기 위해 온점을 기준으로 텍스트에 물리적인 딜레이 요소를 넣거나
-        // playSilentUtterance를 체이닝할 수 있습니다. 가장 간단한 방법은 구두점을 살리는 것입니다.
-        tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "TTS_ID_${System.currentTimeMillis()}")
+
+        val params = Bundle().apply {
+            putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, currentVolume.coerceIn(0f, 1f))
+        }
+
+        tts?.speak(text, TextToSpeech.QUEUE_FLUSH, params, "LAST_${System.currentTimeMillis()}")
+    }
+
+    override fun speakFromIndex(verses: List<String>, startIndex: Int) {
+        if (!isInitialized || verses.isEmpty()) return
+
+        tts?.stop() // 기존 낭독 중단
+
+        for (i in startIndex until verses.size) {
+            val params = Bundle().apply {
+                putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, currentVolume.coerceIn(0f, 1f))
+            }
+            val queueMode = if (i == startIndex) TextToSpeech.QUEUE_FLUSH else TextToSpeech.QUEUE_ADD
+            val utteranceId = if (i == verses.size - 1) "LAST_${i}" else "ID_${i}"
+            
+            tts?.speak(verses[i], queueMode, params, utteranceId)
+        }
+    }
+
+    override fun setVolume(volume: Float) {
+        currentVolume = volume.coerceIn(0f, 1f)
+        // Note: Real-time update for the CURRENTLY speaking utterance is not supported by Android TTS API.
+        // However, by using speakFromIndex with individual verses, the new volume will be applied to the NEXT verse in the queue.
     }
 
     override fun stop() {
@@ -50,5 +93,11 @@ class TtsManager @Inject constructor(
     override fun shutdown() {
         tts?.stop()
         tts?.shutdown()
+        tts = null
+        isInitialized = false
+    }
+
+    override fun setOnCompletionListener(listener: () -> Unit) {
+        onCompletionListener = listener
     }
 }

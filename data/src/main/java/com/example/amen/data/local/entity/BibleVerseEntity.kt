@@ -6,13 +6,14 @@ import com.example.amen.domain.entity.BibleVerse
 
 @Entity(tableName = "bible_verses")
 data class BibleVerseEntity(
-    @PrimaryKey
-    val id: Int,
+    @PrimaryKey(autoGenerate = true)
+    val id: Int = 0,
     val book: String,
     val chapter: Int,
     val verse: Int,
     val content: String,
-    val isRead: Boolean = false // 완독 트래커를 위한 컬럼
+    val isRead: Boolean = false,   // 완독 트래커
+    val isLiked: Boolean = false   // 좋아요
 ) {
     fun toDomainModel(): BibleVerse {
         return BibleVerse(
@@ -20,7 +21,8 @@ data class BibleVerseEntity(
             book = book,
             chapter = chapter,
             verse = verse,
-            content = content
+            content = content,
+            isLiked = isLiked
         )
     }
 }

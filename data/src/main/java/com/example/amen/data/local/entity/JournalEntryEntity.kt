@@ -10,14 +10,18 @@ data class JournalEntryEntity(
     val id: Long = 0,
     val dateTimestamp: Long,
     val content: String,
-    val mood: String?
+    val mood: String?,
+    val verseRef: String? = null, // 참조 구절 (예: "창세기 1장 1절")
+    val verseContent: String? = null // 참조 구절 내용
 ) {
     fun toDomainModel(): JournalEntry {
         return JournalEntry(
             id = id,
             dateTimestamp = dateTimestamp,
             content = content,
-            mood = mood
+            mood = mood,
+            verseRef = verseRef,
+            verseContent = verseContent
         )
     }
 
@@ -27,7 +31,9 @@ data class JournalEntryEntity(
                 id = entry.id,
                 dateTimestamp = entry.dateTimestamp,
                 content = entry.content,
-                mood = entry.mood
+                mood = entry.mood,
+                verseRef = entry.verseRef,
+                verseContent = entry.verseContent
             )
         }
     }

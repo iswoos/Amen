@@ -21,6 +21,12 @@ class DailyRoutineViewModel @Inject constructor(
     private val getDailyRoutineVerseUseCase: GetDailyRoutineVerseUseCase,
     private val ttsController: TtsController
 ) : ViewModel() {
+    
+    init {
+        ttsController.setOnCompletionListener {
+            _isPlaying.value = false
+        }
+    }
 
     private val _verseState = MutableStateFlow<DailyRoutineVerse?>(null)
     val verseState: StateFlow<DailyRoutineVerse?> = _verseState.asStateFlow()
@@ -54,6 +60,8 @@ class DailyRoutineViewModel @Inject constructor(
 
     override fun onCleared() {
         super.onCleared()
-        ttsController.shutdown()
+        // 싱글톤인 TtsController를 완전히 종료(shutdown)하면 다른 화면에서도 사운드가 안 나오게 되므로
+        // 화면을 벗어날 때는 stop()만 호출합니다.
+        ttsController.stop()
     }
 }

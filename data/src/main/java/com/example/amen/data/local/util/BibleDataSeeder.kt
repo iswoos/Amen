@@ -5,35 +5,37 @@ import com.example.amen.data.local.dao.BibleDao
 import com.example.amen.data.local.entity.BibleVerseEntity
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.io.InputStreamReader
 import javax.inject.Inject
+import javax.inject.Singleton
 
+@Singleton
 class BibleDataSeeder @Inject constructor(
-    private val bibleDao: BibleDao,
-    private val context: Context,
-    private val gson: Gson
+    @ApplicationContext private val context: Context,
+    private val bibleDao: BibleDao
 ) {
-    suspend fun seedDatabaseIfNeeded() {
+    suspend fun seedIfNeeded() {
         withContext(Dispatchers.IO) {
             val count = bibleDao.getTotalVersesCount()
-            // DB가 비어있을 때만 assets/bible_krv.json 파일을 읽어서 저장
-            if (count == 0) {
+            // 데이터가 아예 없거나, 이전 샘플 데이터만 있는 경우(8개 미만) 재시딩 수행
+            // 성경 전권(약 3.1만 절) 시딩을 위해 임계값을 대폭 상향합니다.
+            if (count < 30000) {
                 try {
-                    val inputStream = context.assets.open("bible_krv.json")
-                    val reader = InputStreamReader(inputStream)
+                    if (count > 0) {
+                        bibleDao.deleteAllVerses()
+                    }
+                    val jsonString = context.assets.open("bible_data.json")
+                        .bufferedReader()
+                        .use { it.readText() }
+                    
                     val listType = object : TypeToken<List<BibleVerseEntity>>() {}.type
+                    val verses: List<BibleVerseEntity> = Gson().fromJson(jsonString, listType)
                     
-                    // JSON -> List<BibleVerseEntity> 파싱
-                    val verses: List<BibleVerseEntity> = gson.fromJson(reader, listType)
-                    
-                    // Room Database 대량 삽입
                     bibleDao.insertAll(verses)
-                    reader.close()
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    // 실제 환경에서는 로그에 에러를 기록해야 합니다.
                 }
             }
         }

@@ -10,6 +10,7 @@ import com.example.amen.data.local.dao.JournalDao
 import com.example.amen.data.repository.BibleRepositoryImpl
 import com.example.amen.data.repository.JournalRepositoryImpl
 import com.example.amen.data.repository.StreakRepositoryImpl
+import com.example.amen.data.local.util.BibleDataSeeder
 import com.example.amen.domain.audio.AudioController
 import com.example.amen.domain.audio.TtsController
 import com.example.amen.domain.repository.BibleRepository
@@ -33,7 +34,7 @@ object AppModule {
             context,
             AmenDatabase::class.java,
             AmenDatabase.DATABASE_NAME
-        ).build()
+        ).fallbackToDestructiveMigration().build()
     }
 
     @Provides
@@ -57,9 +58,10 @@ object AppModule {
     @Provides
     @Singleton
     fun provideBibleRepository(
-        bibleDao: BibleDao
+        bibleDao: BibleDao,
+        bibleDataSeeder: BibleDataSeeder
     ): BibleRepository {
-        return BibleRepositoryImpl(bibleDao)
+        return BibleRepositoryImpl(bibleDao, bibleDataSeeder)
     }
 
     @Provides

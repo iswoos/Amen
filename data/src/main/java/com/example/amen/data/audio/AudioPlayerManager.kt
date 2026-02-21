@@ -2,6 +2,9 @@ package com.example.amen.data.audio
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
+import androidx.media3.common.AudioAttributes
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
@@ -24,13 +27,22 @@ class AudioPlayerManager @Inject constructor(
     private val scope = CoroutineScope(Dispatchers.Main)
 
     init {
+        // AudioFocus를 직접 요청하지 않고 USAGE_MEDIA로 설정
+        // → TTS(System TTS)와 ExoPlayer가 AudioFocus를 공유하도록 처리
+        val audioAttributes = AudioAttributes.Builder()
+            .setUsage(C.USAGE_MEDIA)
+            .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
+            .build()
+
         exoPlayer = ExoPlayer.Builder(context).build().apply {
+            setAudioAttributes(audioAttributes, false) // handleAudioFocus = false → 포커스 독점 안 함
             repeatMode = Player.REPEAT_MODE_ALL
         }
     }
 
-    // 로컬 raw 리소스 등에서 uri를 받아 재생 (에셋 리소스가 추가되면 사용)
+    // 로컬 assets 파일 재생
     override fun playAudio(uriString: String) {
+        Log.d("AudioPlayerManager", "Playing audio: $uriString")
         val mediaItem = MediaItem.fromUri(Uri.parse(uriString))
         exoPlayer?.apply {
             setMediaItem(mediaItem)
@@ -38,21 +50,21 @@ class AudioPlayerManager @Inject constructor(
             playWhenReady = true
         }
     }
-    
-    // 오디오 볼륨 직접 설정
-    override fun setVolume(volume: Float) {
-        exoPlayer?.volume = volume
+
+    // 배경음 볼륨 즉각 반영
+    override fun setBackgroundVolume(volume: Float) {
+        exoPlayer?.volume = volume.coerceIn(0f, 1f)
     }
 
-    // 슬립 타이머(지정된 시간 후 30초에 걸쳐 Fade Out 하면서 정지)
+    // 슬립 타이머: minutes 분 후 30초 페이드 아웃 후 정지
     override fun startSleepTimerWithFadeOut(minutes: Int) {
         fadeJob?.cancel()
         fadeJob = scope.launch {
-            // 대기
+            // 설정한 시간(분) 대기
             delay(minutes * 60 * 1000L)
-            
-            // 30초 Fade Out (1초마다 볼륨을 서서히 줄임)
-            val fadeDurationMs = 30000L
+
+            // 30초에 걸쳐 페이드 아웃
+            val fadeDurationMs = 30_000L
             val initialVolume = exoPlayer?.volume ?: 1.0f
             val steps = 30
             val delayPerStep = fadeDurationMs / steps
@@ -65,7 +77,7 @@ class AudioPlayerManager @Inject constructor(
                 delay(delayPerStep)
             }
 
-            // 페이드아웃 완료 후 중지
+            // 페이드 아웃 완료 후 정지
             stop()
         }
     }

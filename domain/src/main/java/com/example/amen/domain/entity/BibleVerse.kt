@@ -5,7 +5,8 @@ data class BibleVerse(
     val book: String,
     val chapter: Int,
     val verse: Int,
-    val content: String
+    val content: String,
+    val isLiked: Boolean = false // 좋아요 여부
 )
 
 data class DailyRoutineVerse(
