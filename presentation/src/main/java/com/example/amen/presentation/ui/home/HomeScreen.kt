@@ -72,7 +72,7 @@ fun HomeScreen(
                 // 상단 배너 광고
                 BannerAdView(modifier = Modifier.fillMaxWidth())
 
-                // 타이틀 및 시간
+                // 타이틀
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
                         text = "AMEN",
@@ -82,12 +82,6 @@ fun HomeScreen(
                             letterSpacing = 6.sp,
                             color = MaterialTheme.colorScheme.primary
                         )
-                    )
-                    Text(
-                        text = timeString,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.8f),
-                        modifier = Modifier.padding(top = 4.dp)
                     )
                 }
 
@@ -228,7 +222,7 @@ fun PrayerJournalInputSection(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text(
-            text = "말씀 묵상 기록",
+            text = "오늘의 말씀 일기",
             style = MaterialTheme.typography.titleMedium,
             color = Color.White,
             fontWeight = FontWeight.Bold
@@ -259,7 +253,7 @@ fun PrayerJournalInputSection(
         ) {
             Icon(Icons.Default.Save, contentDescription = null, modifier = Modifier.size(18.dp))
             Spacer(modifier = Modifier.width(8.dp))
-            Text("기록 저장하기")
+            Text("일기 저장하기")
         }
     }
 }
