@@ -44,3 +44,6 @@ Thumbs.db
 # App Release
 *.aab
 /app/release/
+
+# Script
+generate_keystore.sh
